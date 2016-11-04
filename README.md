@@ -157,7 +157,7 @@ class PacConfigs {
 
 ### Common Code
 ```js
-const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$';
+const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,5})?$';
 ```
 
 ### Plugin for Supporting Plugins (Root)
@@ -235,7 +235,7 @@ Plugin support is itself implemented via plugin.
             ifHostProxied: {
               patternProperties: {
 
-                "^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$": { type: "boolean" }
+                "^([a-z-]+[.])+[a-z-]+(:[0-9]{1,5})?$": { type: "boolean" }
 
               },
               additionalProperties: false
