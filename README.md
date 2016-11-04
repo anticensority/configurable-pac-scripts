@@ -88,9 +88,10 @@ var CONFIGS = {"_start":"CONFIGS_START",
 
 ## JSON Schemas of Configs
 
-Standard: http://json-schema.org
+The standard: http://json-schema.org
 
 ### Common Code
+
 ```js
 const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,5})?$';
 ```
