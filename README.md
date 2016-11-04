@@ -92,93 +92,6 @@ class PacConfigPlugin {
 
 };
 
-const pluginForPlugins = new PacConfigPlugin("plugins", "0.0.0.15", {
-
-  title: "PAC Script Configs",
-
-  definitions: {
-    pluginDescription: {
-      type: "object",
-      properties: {
-        version:   { type: "string" },
-        schemaUrl: { type: "string", format: "uri" }
-      },
-      required: ["version"]
-    }
-  },
-  
-  type: "object",
-  properties: {
-    _start: {
-      constant: "CONFIGS_START",
-    },
-    plugins: {
-      title: "Plugin for supporting other plugins",
-      type: "object",
-      properties: {
-        plugins: {
-          $ref: "#/definitions/pluginDescription"
-        }
-      },
-      required: ["plugins"],
-      additionalProperties: {
-          $ref: "#/definitions/pluginDescription"
-      }
-    },
-    _end: {
-      constant: "CONFIGS_END",
-    }
-  },
-  required: ["_start", "_end", "plugins"]
-});
-
-const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$';
-
-const pluginForProxies = new PacConfigPlugin("proxies", "0.0.0.15", {
-
-  title: "PAC Script Proxies",
-
-  type: "object",
-  properties: {
-    proxies: {
-      title: "Plugin for configuring proxies",
-      type: "object",
-      properties: {
-        exceptions: {
-          type: "object",
-          properties: {
-            ifEnabled: { type: "boolean" },
-            hostToBoolean: {
-              patternProperties: {
-                "^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$": { type: "boolean" }
-              },
-              additionalProperties: false
-            }
-          },
-          required: ["hostToBoolean"]            
-        },
-        typeToProxies: {
-          patternProperties: {
-            "^(HTTPS|PROXY)$": {
-              type: "array",
-              items: {
-                type: "string",
-                pattern: hostPattern
-              }
-            }
-          },
-        },
-        ifHttpsProxyOnly: { type: "boolean" },
-        ifHttpsUrlsOnly: { type: "boolean" },
-        customProxyString: { type: "string" },
-      },
-      required: ["typeToProxies", "exceptions"],
-      additionalProperties: false
-    }
-  },
-  required: ["proxies"]
-});
-
 class PacConfigs {
 
   Fields:
@@ -242,7 +155,6 @@ class PacConfigs {
 
 ```js
 {
-
   title: "PAC Script Configs",
 
   definitions: {
@@ -259,7 +171,7 @@ class PacConfigs {
   type: "object",
   properties: {
     _start: {
-      enum: ["CONFIGS_START"],
+      constant: "CONFIGS_START",
     },
     plugins: {
       title: "Plugin for supporting other plugins",
@@ -271,13 +183,91 @@ class PacConfigs {
       },
       required: ["plugins"],
       additionalProperties: {
-          $ref: "#/definitions/pluginDescription"
+        $ref: "#/definitions/pluginDescription"
       }
     },
     _end: {
-      enum: ["CONFIGS_END"],
+      constant: "CONFIGS_END",
     }
   },
   required: ["_start", "_end", "plugins"]
-};
+});
+
+const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$';
+
+{
+  title: "PAC Script Proxies",
+
+  type: "object",
+  properties: {
+    proxies: {
+      title: "Plugin for configuring proxies",
+      type: "object",
+      properties: {
+        exceptions: {
+          type: "object",
+          properties: {
+            ifEnabled: { type: "boolean" },
+            hostToBoolean: {
+              patternProperties: {
+                "^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$": { type: "boolean" }
+              },
+              additionalProperties: false
+            }
+          },
+          required: ["hostToBoolean"]            
+        },
+        typeToProxies: {
+          patternProperties: {
+            "^(HTTPS|PROXY)$": {
+              type: "array",
+              items: {
+                type: "string",
+                pattern: hostPattern
+              }
+            }
+          },
+        },
+        ifHttpsProxyOnly: { type: "boolean" },
+        ifHttpsUrlsOnly: { type: "boolean" },
+        customProxyString: { type: "string" },
+      },
+      required: ["typeToProxies", "exceptions"],
+      additionalProperties: false
+    }
+  },
+  required: ["proxies"]
+});
+
+
+{
+  title: "PAC Script for Anticensorship",
+
+  type: "object",
+  properties: {
+  
+    anticensorship: {
+      type: "object",
+      properties: {
+
+        ifUncensorByIp: {
+          type: "boolean"
+        },
+        ifUncensorByHost: {
+          type: "boolean"
+        },
+        ipToProxy: {
+          patternProperties: {
+            "^regex_for_ipv4_ipv6$": { type: "string", pattern: hostPattern }
+          },
+          additionalProperties: false
+        }
+
+      },
+      required: ["ipToProxy"]
+    }
+
+  },
+  required: ["anticensorship"]
+}
 ```
