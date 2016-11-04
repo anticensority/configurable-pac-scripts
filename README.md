@@ -177,7 +177,8 @@ Plugin support is itself implemented via plugin.
         schemaUrl: { type: "string", format: "uri" }
 
       },
-      required: ["version"]
+      required: ["version"],
+      additionalProperties: false
     }
   },
   
@@ -207,7 +208,8 @@ Plugin support is itself implemented via plugin.
     }
 
   },
-  required: ["_start", "_end", "plugins"]
+  required: ["_start", "_end", "plugins"],
+  additionalProperties: true
 });
 ```
 
@@ -240,7 +242,8 @@ Plugin support is itself implemented via plugin.
             }
 
           },
-          required: ["ifHostProxied"]
+          required: ["ifHostProxied"],
+          additionalProperties: false
         },
         typeToProxies: {
           patternProperties: {
@@ -254,6 +257,7 @@ Plugin support is itself implemented via plugin.
             }
 
           },
+          additionalProperties: false
         },
         ifHttpsProxyOnly: { type: "boolean" },
         ifHttpsUrlsOnly: { type: "boolean" },
@@ -262,8 +266,8 @@ Plugin support is itself implemented via plugin.
             type: "string"
           }, {
             constant: false
-          }],
-
+          }]
+        }
       },
       required: ["typeToProxies", "exceptions"],
       additionalProperties: false
@@ -295,7 +299,9 @@ Plugin support is itself implemented via plugin.
         },
         ipToProxy: {
           patternProperties: {
+
             "^regex_for_ipv4_ipv6$": { type: "string", pattern: hostPattern }
+
           },
           additionalProperties: false
         }
