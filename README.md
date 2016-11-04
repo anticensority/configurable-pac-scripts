@@ -71,7 +71,7 @@ var CONFIGS = {"_start":"CONFIGS_START",
     
     "ifHttpsProxyOnly":  false,
     "ifHttpsUrlsOnly":   false,
-    "customProxyString": "",
+    "customProxyString": false,
   },
 
   "anticensorship": {
@@ -243,7 +243,12 @@ Plugin support is itself implemented via plugin.
         },
         ifHttpsProxyOnly: { type: "boolean" },
         ifHttpsUrlsOnly: { type: "boolean" },
-        customProxyString: { type: "string" },
+        customProxyString: {
+          anyOf: [{
+            type: "string"
+          }, {
+            constant: false
+          }],
       },
       required: ["typeToProxies", "exceptions"],
       additionalProperties: false
