@@ -172,8 +172,10 @@ Plugin support is itself implemented via plugin.
     pluginDescription: {
       type: "object",
       properties: {
+
         version:   { type: "string" },
         schemaUrl: { type: "string", format: "uri" }
+
       },
       required: ["version"]
     }
@@ -181,6 +183,7 @@ Plugin support is itself implemented via plugin.
   
   type: "object",
   properties: {
+
     _start: {
       constant: "CONFIGS_START",
     },
@@ -188,9 +191,11 @@ Plugin support is itself implemented via plugin.
       title: "Plugin for supporting other plugins",
       type: "object",
       properties: {
+
         plugins: {
           $ref: "#/definitions/pluginDescription"
         }
+
       },
       required: ["plugins"],
       additionalProperties: {
@@ -200,6 +205,7 @@ Plugin support is itself implemented via plugin.
     _end: {
       constant: "CONFIGS_END",
     }
+
   },
   required: ["_start", "_end", "plugins"]
 });
@@ -213,25 +219,32 @@ Plugin support is itself implemented via plugin.
 
   type: "object",
   properties: {
+
     proxies: {
       title: "Plugin for configuring proxies",
       type: "object",
       properties: {
+
         exceptions: {
           type: "object",
           properties: {
+
             ifEnabled: { type: "boolean" },
             ifHostProxied: {
               patternProperties: {
+
                 "^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$": { type: "boolean" }
+
               },
               additionalProperties: false
             }
+
           },
           required: ["ifHostProxied"]
         },
         typeToProxies: {
           patternProperties: {
+
             "^(HTTPS|PROXY)$": {
               type: "array",
               items: {
@@ -239,6 +252,7 @@ Plugin support is itself implemented via plugin.
                 pattern: hostPattern
               }
             }
+
           },
         },
         ifHttpsProxyOnly: { type: "boolean" },
@@ -249,10 +263,12 @@ Plugin support is itself implemented via plugin.
           }, {
             constant: false
           }],
+
       },
       required: ["typeToProxies", "exceptions"],
       additionalProperties: false
     }
+
   },
   required: ["proxies"]
 });
@@ -285,10 +301,12 @@ Plugin support is itself implemented via plugin.
         }
 
       },
-      required: ["ipToProxy"]
+      required: ["ipToProxy"],
+      additionalProperties: false
     }
 
   },
-  required: ["anticensorship"]
+  required: ["anticensorship"],
+  additionalProperties: false
 }
 ```
