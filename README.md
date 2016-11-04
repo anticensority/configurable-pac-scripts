@@ -235,7 +235,7 @@ Plugin support is itself implemented via plugin.
         ipToProxy: {
           patternProperties: {
 
-            "^([0-9]{1,3}(.[0-9]{1,3}){3}|([0-9A-Fa-f]{0,4}:?){2,8})$": { type: "string", pattern: hostPattern }
+            "^([0-9]{1,3}(.[0-9]{1,3}){3}|([0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4})$": { type: "string", pattern: hostPattern }
 
           },
           additionalProperties: false
