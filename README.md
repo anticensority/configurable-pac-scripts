@@ -5,7 +5,9 @@
 We want PAC scripts to be configurable, e.g. force it to use HTTPS proxies only, force it to use custom proxies,
 exclude some sites from proxying or add some, etc.
 
-## Configurable PAC Scripts should be Interchangeable with Simple PAC Scripts (In Most Cases)
+## Design Principles
+
+### Configurable PAC Scripts should be Interchangeable with Simple PAC Scripts (In Most Cases)
 
 0. Configurable PAC scripts should be backward compatible with software that expects
    palin old PAC scripts. It widens an audiotry of the PAC script.
@@ -17,12 +19,12 @@ exclude some sites from proxying or add some, etc.
 4. Retrieving and changing configs must be easy, as easy as search/replace and parsing JSON, there should
    be no need for lexical parsing of ecmascript.
 
-## Clients should Use Schema Validation as Protection from Malformed Configs
+### Clients should Use Schema Validation as Protection from Malformed Configs
 
 0. Client may use PAC scripts from third parties which may be malicious. Risk of damage should be minimised by data validation.
 1. Cleint may use schemas to validate configs supplied by user or server, this should contribute to client stability against errors.
 
-## Configs should be Versioned
+### Configs should be Versioned
 
 1. You can't know what configs you will need, it varies with use cases and time.
    Clients should be able to reject configs they can't use based on version (not only schema).
@@ -30,18 +32,18 @@ exclude some sites from proxying or add some, etc.
    Migrations bloat the client codebase, so minimum number of migration instructions should be kept on the cleint,
    migration scripts may be lazy loaded on each update (if allowed).
 
-## Configs should be Modular
+### Configs should be Modular
 
 7. Separation into components/modules/plugins contributes to:
   * problem decomposition, separation of concerns
   * one standard/code may be used for different use cases (but we have only one -- anticensorship)
 
-## Configs are Dynamic
+### Configs are Dynamic
 
 8. Don't use classes (e.g. Java) to describe configs object, use hash/dictionary instead with a schema validator.
    I would like to use CONFIGS.pluginNamedFoo.propBar, CONFIGS.plugins[2] is not usable at all.
 
-## By Example
+## Example
 
 ```js
 // File: proxy-0.0.0.15.pac
@@ -56,7 +58,7 @@ var CONFIGS = {"_start":"CONFIGS_START",
   "proxies": {
     "exceptions": {
       "ifEnabled": true,
-      "hostToBoolean": {
+      "ifHostProxied": {
         "youtube.com": false,
         "archive.org": true,
         "bitcoin.org": true
@@ -151,7 +153,16 @@ class PacConfigs {
 
 ```
 
-## JSON Schema of Configs
+## JSON Schemas of Configs
+
+### Common Code
+```js
+const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$';
+```
+
+### Plugin for Supporting Plugins (Root)
+
+Plugin support is itself implemented via plugin.
 
 ```js
 {
@@ -192,9 +203,11 @@ class PacConfigs {
   },
   required: ["_start", "_end", "plugins"]
 });
+```
 
-const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$';
+### Plugin for Configuring Proxies
 
+```js
 {
   title: "PAC Script Proxies",
 
@@ -208,14 +221,14 @@ const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$';
           type: "object",
           properties: {
             ifEnabled: { type: "boolean" },
-            hostToBoolean: {
+            ifHostProxied: {
               patternProperties: {
                 "^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$": { type: "boolean" }
               },
               additionalProperties: false
             }
           },
-          required: ["hostToBoolean"]            
+          required: ["ifHostProxied"]
         },
         typeToProxies: {
           patternProperties: {
@@ -238,8 +251,11 @@ const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$';
   },
   required: ["proxies"]
 });
+```
 
+### Plugin for Configuring Anticensorship Behavior
 
+```js
 {
   title: "PAC Script for Anticensorship",
 
