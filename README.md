@@ -32,23 +32,28 @@ exclude some sites from proxying or add some, etc.
 
 ## Configs should be Modular
 
-7. Separation into components contributes to:
+7. Separation into components/modules/plugins contributes to:
   * problem decomposition, separation of concerns
   * one standard/code may be used for different use cases (but we have only one -- anticensorship)
+
+## Configs are Dynamic
+
+8. Don't use classes (e.g. Java) to describe configs object, use hash/dictionary instead with a schema validator.
+   I would like to use CONFIGS.pluginNamedFoo.propBar, CONFIGS.plugins[2] is not usable at all.
 
 ## By Example
 
 ```js
 // File: proxy-0.0.0.15.pac
-var CONF = {"_start":"CONFIGS_START",
+var CONFIGS = {"_start":"CONFIGS_START",
 
   "plugins": {
     "plugins": { "version": "0.0.0.15", "schemaUrl": "https://satan.hell/anticensor.json" },
-    "common":  { "version": "0.0.0.15" },
+    "proxies":  { "version": "0.0.0.15" },
     "anticensorship": { "version": "0.0.0.15" }
   },
 
-  "common": {
+  "proxies": {
     "exceptions": {
       "ifEnabled": true,
       "hostsHash": {
@@ -87,10 +92,9 @@ class PacConfigPlugin {
 
 };
 
-new PacConfigPlugin("plugins", "0.0.0.15", {
+const pluginForPlugins = new PacConfigPlugin("plugins", "0.0.0.15", {
 
   title: "PAC Script Configs",
-  id: "PAC Script Configs 0.0.0.15"
 
   definitions: {
     pluginDescription: {
@@ -105,20 +109,74 @@ new PacConfigPlugin("plugins", "0.0.0.15", {
   
   type: "object",
   properties: {
-    _start: "CONFIGS_START",
+    _start: {
+      constant: "CONFIGS_START",
+    },
     plugins: {
       title: "Plugin for supporting other plugins",
       type: "object",
       properties: {
-        type: "object",
-        properties: {
+        plugins: {
           $ref: "#/definitions/pluginDescription"
         }
+      },
+      required: ["plugins"],
+      additionalProperties: {
+          $ref: "#/definitions/pluginDescription"
       }
+    },
+    _end: {
+      constant: "CONFIGS_END",
     }
-    _end: "CONFIGS_END"
-  }
+  },
+  required: ["_start", "_end", "plugins"]
+});
 
+const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$';
+
+const pluginForProxies = new PacConfigPlugin("proxies", "0.0.0.15", {
+
+  title: "PAC Script Proxies",
+
+  type: "object",
+  properties: {
+    proxies: {
+      title: "Plugin for configuring proxies",
+      type: "object",
+      properties: {
+        exceptions: {
+          type: "object",
+          properties: {
+            ifEnabled: { type: "boolean" },
+            hostToBoolean: {
+              patternProperties: {
+                "^([a-z-]+[.])+[a-z-]+(:[0-9]{1,65535})?$": { type: "boolean" }
+              },
+              additionalProperties: false
+            }
+          },
+          required: ["hostToBoolean"]            
+        },
+        typeToProxies: {
+          patternProperties: {
+            "^(HTTPS|PROXY)$": {
+              type: "array",
+              items: {
+                type: "string",
+                pattern: hostPattern
+              }
+            }
+          },
+        },
+        ifHttpsProxyOnly: { type: "boolean" },
+        ifHttpsUrlsOnly: { type: "boolean" },
+        customProxyString: { type: "string" },
+      },
+      required: ["typeToProxies", "exceptions"],
+      additionalProperties: false
+    }
+  },
+  required: ["proxies"]
 });
 
 class PacConfigs {
