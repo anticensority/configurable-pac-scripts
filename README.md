@@ -77,7 +77,7 @@ var CONFIGS = {"_start":"CONFIGS_START",
   "anticensorship": {
     "ifUncensorByIp":   true,
     "ifUncensorByHost": true,
-    "ipToProxy": __IP2PROXY__
+    "ipToProxy": { __ipv4__: satan.hell:666, __ipv6__: satan.hell:333 }
   },
 
   "_end":"CONFIGS_END"};
@@ -164,7 +164,7 @@ class PacConfigs {
 const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,5})?$';
 ```
 
-### Plugin for Supporting Plugins (Root)
+### Plugin for Supporting Plugins (Root of Configs JSON)
 
 Plugin support is itself implemented via plugin.
 
@@ -212,9 +212,9 @@ Plugin support is itself implemented via plugin.
     }
 
   },
-  required: ["_start", "_end", "plugins"],
+  required: ["_start", "_end", "plugins", { $data: #/properties/additionalProperties# }],
   additionalProperties: true
-});
+}
 ```
 
 ### Plugin for Configuring Proxies
@@ -279,7 +279,7 @@ Plugin support is itself implemented via plugin.
 
   },
   required: ["proxies"]
-});
+}
 ```
 
 ### Plugin for Configuring Anticensorship Behavior
