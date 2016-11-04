@@ -81,7 +81,11 @@ var CONFIGS = {"_start":"CONFIGS_START",
   },
 
   "_end":"CONFIGS_END"};
+```
 
+## Possible Implementation
+
+```js
 // Chrome Extension (Client)
 
 class PacConfigPlugin {
