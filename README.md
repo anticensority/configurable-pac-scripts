@@ -77,87 +77,18 @@ var CONFIGS = {"_start":"CONFIGS_START",
   "anticensorship": {
     "ifUncensorByIp":   true,
     "ifUncensorByHost": true,
-    "ipToProxy": { __ipv4__: satan.hell:666, __ipv6__: satan.hell:333 }
+    "ipToProxy": {
+      "12.33.44.55": "satan.hell:666",
+      "2001:0db8:0000:0042:0000:8a2e:0370:7334": "satan.hell:333"
+    }
   },
 
   "_end":"CONFIGS_END"};
 ```
 
-## Possible Implementation
-
-```js
-// Chrome Extension (Client)
-
-class PacConfigPlugin {
-
-  Fields:
-
-    name
-    version
-    scheme
-
-};
-
-class PacConfigs {
-
-  Fields:
-  
-    custom: {...}
-    set defauld(newDefauld) {
-      this.assertSchemes( this._merge( newDefauld, this.custom ) );
-      return newDefauld;
-    }
-    get defauld(value) {
-      return value;
-    }
-
-    _schemas: {
-      root: rootSchema, // { plugins: ...schema... }
-        ???
-        plugins: {
-          ...
-          common: ...PacConfigPlugin...
-          anticensorship: ...PacConfigPlugin...
-          ...
-        }
-    }
-
-  Methods:
-  
-    constructor(defauldConfigs, ...plugins)
-      CALLS:
-        plugins.forEach( (plugin) => this.usePlugin(plugin) );
-        this.configs.defauld = defauldConfigs
-
-    usePlugin(plugin)
-      CHANGES: _schemas
-
-    _merge(target, source)
-    
-    getCustomObject(pathStr)
-      more convenient for creating custom props than basic set
-      DOES:
-        returns modifiable prop of custom without any merging
-        returns only values with prototype Object
-        if prop is not defined:
-          1. checks that defauld has Object on the same path
-          2. creates {} on custom and returns it.
-    get(pathStr, ifStrict = true)
-      DOES: applies custom to defauld, gets prop __strictly__
-      RETURNS: merged __copy__
-    set(pathStr)
-      CALLS:
-        sets prop of custom configs
-        this.assertScheme()
-
-    assertScheme(configs)
-      CALLS:
-        configs ? check(configs) : check(this.get())
-};
-
-```
-
 ## JSON Schemas of Configs
+
+Standard: http://json-schema.org
 
 ### Common Code
 ```js
@@ -319,4 +250,77 @@ Plugin support is itself implemented via plugin.
   required: ["anticensorship"],
   additionalProperties: false
 }
+```
+## Possible Implementation
+
+```js
+// Chrome Extension (Client)
+
+class PacConfigPlugin {
+
+  Fields:
+
+    name
+    version
+    scheme
+
+};
+
+class PacConfigs {
+
+  Fields:
+  
+    custom: {...}
+    set defauld(newDefauld) {
+      this.assertSchemes( this._merge( newDefauld, this.custom ) );
+      return newDefauld;
+    }
+    get defauld(value) {
+      return value;
+    }
+
+    _schemas: {
+      root: rootSchema, // { plugins: ...schema... }
+        ???
+        plugins: {
+          ...
+          common: ...PacConfigPlugin...
+          anticensorship: ...PacConfigPlugin...
+          ...
+        }
+    }
+
+  Methods:
+  
+    constructor(defauldConfigs, ...plugins)
+      CALLS:
+        plugins.forEach( (plugin) => this.usePlugin(plugin) );
+        this.configs.defauld = defauldConfigs
+
+    usePlugin(plugin)
+      CHANGES: _schemas
+
+    _merge(target, source)
+    
+    getCustomObject(pathStr)
+      more convenient for creating custom props than basic set
+      DOES:
+        returns modifiable prop of custom without any merging
+        returns only values with prototype Object
+        if prop is not defined:
+          1. checks that defauld has Object on the same path
+          2. creates {} on custom and returns it.
+    get(pathStr, ifStrict = true)
+      DOES: applies custom to defauld, gets prop __strictly__
+      RETURNS: merged __copy__
+    set(pathStr)
+      CALLS:
+        sets prop of custom configs
+        this.assertScheme()
+
+    assertScheme(configs)
+      CALLS:
+        configs ? check(configs) : check(this.get())
+};
+
 ```
