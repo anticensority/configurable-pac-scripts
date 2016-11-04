@@ -56,26 +56,26 @@ var CONFIGS = {"_start":"CONFIGS_START",
   "proxies": {
     "exceptions": {
       "ifEnabled": true,
-      "hostsHash": {
+      "hostToBoolean": {
         "youtube.com": false,
         "archive.org": true,
         "bitcoin.org": true
       }
     },
-    "proxiesHash": {
+    "typeToProxies": {
       "HTTPS": ["proxy.antizapret.prostovpn.org:3143", "gw2.anticenz.org:443"],
       "PROXY": ["proxy.antizapret.prostovpn.org:3128", "gw2.anticenz.org:8080"]
     },
     
     "ifHttpsProxyOnly":  false,
     "ifHttpsUrlsOnly":   false,
-    "customProxyString": false,
+    "customProxyString": "",
   },
 
   "anticensorship": {
     "ifUncensorByIp":   true,
     "ifUncensorByHost": true,
-    "ip2proxy": __IP2PROXY__
+    "ipToProxy": __IP2PROXY__
   },
 
   "_end":"CONFIGS_END"};
