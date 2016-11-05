@@ -41,7 +41,7 @@ exclude some sites from proxying or add some, etc.
 ### Configs are Dynamic
 
 8. Don't use classes (e.g. Java) to describe configs object, use hash/dictionary instead with a schema validator.
-   I would like to use CONFIGS.pluginNamedFoo.propBar, CONFIGS.plugins[2] is not usable at all.
+   I would like to use `CONFIGS.pluginNamedFoo.propBar`, `getConfigsFor('pluginNamedFoo').propBar` seems invonvenient.
 
 ## Example
 
