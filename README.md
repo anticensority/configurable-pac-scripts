@@ -10,7 +10,7 @@ exclude some sites from proxying or add some, etc.
 ### Configurable PAC Scripts should be Interchangeable with Simple PAC Scripts (In Most Cases)
 
 0. Configurable PAC scripts should be backward compatible with software that expects
-   palin old PAC scripts. It widens an audiotry of the PAC script.
+   plain old PAC scripts. It widens an auditory of the PAC script.
 1. Non-configured PAC script MAY still be a valid PAC script even if configs are not touched  
    (so default config values defined inside PAC script are used).
 2. PAC script MAY require additional configs to be defined before it may be used. This may be used for legal protection (e.g. user provides his proxy).
