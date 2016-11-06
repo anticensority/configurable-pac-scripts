@@ -213,7 +213,7 @@ pluginsSchemas.anticensorship = {
         ipToProxy: {
           patternProperties: {
 
-            [ipPattern]: { type: "string", pattern: hostPattern }
+            [ipPattern]: { type: "string", pattern: nodePattern }
 
           },
           additionalProperties: false
@@ -263,8 +263,8 @@ const CONFIGS = {"_start":"CONFIGS_START",
     "ifUncensorByIp":   true,
     "ifUncensorByHost": true,
     "ipToProxy": {
-      "12.33.44.55": "satan.hell:666",
-      "2001:0db8:0000:0042:0000:8a2e:0370:7334": "satan.hell:333"
+      "12.33.44.55": "satan.hell",
+      "2001:0db8:0000:0042:0000:8a2e:0370:7334": "satan.hell"
     }
   },
 
