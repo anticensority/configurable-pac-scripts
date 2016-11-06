@@ -22,7 +22,7 @@ exclude some sites from proxying or add some, etc.
 ### Clients should Use Schema Validation as Protection from Malformed Configs
 
 0. Client may use PAC scripts from third parties which may be malicious. Risk of damage should be minimised by data validation.
-1. Cleint may use schemas to validate configs supplied by user or server, this should contribute to client stability against errors.
+1. Client may use schemas to validate configs supplied by user or server, this should contribute to client stability against errors.
 
 ### Configs should be Versioned
 
