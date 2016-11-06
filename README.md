@@ -43,69 +43,39 @@ exclude some sites from proxying or add some, etc.
 8. Don't use classes (e.g. Java) to describe configs object, use hash/dictionary instead with a schema validator.   
    `CONFIGS` are used inside PAC script too, and there I would like to use `CONFIGS.pluginNamedFoo.propBar`, `getConfigsFor('pluginNamedFoo').propBar` seems inconvenient.
 
-## Example
-
-```js
-// File: proxy-0.0.0.15.pac
-// ... Somewhere in the middle of PAC script ...
-var CONFIGS = {"_start":"CONFIGS_START",
-
-  "plugins": {
-    "plugins": { "version": "0.0.0.15", "schemaUrl": "https://satan.hell/anticensor.json" },
-    "proxies":  { "version": "0.0.0.15" },
-    "anticensorship": { "version": "0.0.0.15" }
-  },
-
-  "proxies": {
-    "exceptions": {
-      "ifEnabled": true,
-      "ifHostProxied": {
-        "youtube.com": false,
-        "archive.org": true,
-        "bitcoin.org": true
-      }
-    },
-    "typeToProxies": {
-      "HTTPS": ["proxy.antizapret.prostovpn.org:3143", "gw2.anticenz.org:443"],
-      "PROXY": ["proxy.antizapret.prostovpn.org:3128", "gw2.anticenz.org:8080"]
-    },
-    
-    "ifHttpsProxyOnly":  false,
-    "ifHttpsUrlsOnly":   false,
-    "customProxyString": false,
-  },
-
-  "anticensorship": {
-    "ifUncensorByIp":   true,
-    "ifUncensorByHost": true,
-    "ipToProxy": {
-      "12.33.44.55": "satan.hell:666",
-      "2001:0db8:0000:0042:0000:8a2e:0370:7334": "satan.hell:333"
-    }
-  },
-
-  "_end":"CONFIGS_END"};
-// ... PAC script continues and makes uses of, e.g., CONFIGS.proxies...
-```
-
-## JSON Schemas of Configs
+## Schemas and Examples
 
   [JSON Schema standard](http://json-schema.org)
 | [Understanding JSON Schema](https://spacetelescope.github.io/understanding-json-schema/)
-
-### Common Code
-
-```js
-const hostPattern = '^([a-z-]+[.])+[a-z-]+(:[0-9]{1,5})?$';
-```
-
-### Plugin for Supporting Plugins (Root of Configs JSON)
-
-Plugin support is itself implemented via plugin.
+| [ajv](https://github.com/epoberezkin/ajv)
 
 ```js
-{
+'use strict';
+
+const configsSchema = {
+
   title: "PAC Script Configs",
+
+  type: "object",
+  properties: {
+
+    _start: {
+      constant: "CONFIGS_START",
+    },
+    _end: {
+      constant: "CONFIGS_END",
+    }
+
+  },
+  required: ["_start", "_end"],
+  additionalProperties: true
+};
+
+const pluginsSchemas = {};
+
+pluginsSchemas.plugins = {
+
+  title: "PAC Script Plugins",
 
   definitions: {
     pluginDescription: {
@@ -120,13 +90,10 @@ Plugin support is itself implemented via plugin.
       additionalProperties: false
     }
   },
-  
+
   type: "object",
   properties: {
 
-    _start: {
-      constant: "CONFIGS_START",
-    },
     plugins: {
       title: "Plugin for supporting other plugins",
       type: "object",
@@ -141,21 +108,29 @@ Plugin support is itself implemented via plugin.
       additionalProperties: {
         $ref: "#/definitions/pluginDescription"
       }
-    },
-    _end: {
-      constant: "CONFIGS_END",
     }
 
   },
-  required: ["_start", "_end", "plugins", { $data: #/properties/additionalProperties# }],
+  required: ["plugins"],
   additionalProperties: true
-}
-```
 
-### Plugin for Configuring Proxies
+};
 
-```js
-{
+const hostnameRE   = '([a-z0-9-]+[.])+[a-z-]+'; // e.g.: "local-foobar-host"
+const ipv4RE       = '[0-9]{1,3}(.[0-9]{1,3}){3}';
+const ipv6RE       = '([0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}';
+
+const portRE       = ':[0-9]{1,5}';
+const ipv6portedRE = `\\[${ipv6RE}\\]${portRE}`;
+
+// Without port:
+const ipPattern   = `^(${ipv4RE}|${ipv6RE})$`;
+const nodePattern = `^(${hostnameRE}|${ipv4RE}|${ipv6RE})$`;
+// MUST have port:
+const hostPattern = `^((${hostnameRE}|${ipv4RE})${portRE}|${ipv6portedRE})$`;
+
+pluginsSchemas.proxies = {
+
   title: "PAC Script Proxies",
 
   type: "object",
@@ -174,7 +149,7 @@ Plugin support is itself implemented via plugin.
             ifHostProxied: {
               patternProperties: {
 
-                "^([a-z-]+[.])+[a-z-]+(:[0-9]{1,5})?$": { type: "boolean" }
+                [nodePattern]: { type: "boolean" }
 
               },
               additionalProperties: false
@@ -213,19 +188,18 @@ Plugin support is itself implemented via plugin.
     }
 
   },
-  required: ["proxies"]
-}
-```
+  required: ["proxies"],
+  additionalProperties: true
 
-### Plugin for Configuring Anticensorship Behavior
+};
 
-```js
-{
+pluginsSchemas.anticensorship = {
+
   title: "PAC Script for Anticensorship",
 
   type: "object",
   properties: {
-  
+
     anticensorship: {
       type: "object",
       properties: {
@@ -239,7 +213,7 @@ Plugin support is itself implemented via plugin.
         ipToProxy: {
           patternProperties: {
 
-            "^([0-9]{1,3}(.[0-9]{1,3}){3}|([0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4})$": { type: "string", pattern: hostPattern }
+            [ipPattern]: { type: "string", pattern: hostPattern }
 
           },
           additionalProperties: false
@@ -252,9 +226,72 @@ Plugin support is itself implemented via plugin.
 
   },
   required: ["anticensorship"],
-  additionalProperties: false
+  additionalProperties: true
+
+};
+
+// CONFIGS is extracted from PAC script as JSON
+
+const CONFIGS = {"_start":"CONFIGS_START",
+
+  "plugins": {
+    "plugins": { "version": "0.0.0.15", "schemaUrl": "https://satan.hell/anticensor.json" },
+    "proxies":  { "version": "0.0.0.15" },
+    "anticensorship": { "version": "0.0.0.15" }
+  },
+
+  "proxies": {
+    "exceptions": {
+      "ifEnabled": true,
+      "ifHostProxied": {
+        "youtube.com": false,
+        "archive.org": true,
+        "bitcoin.org": true
+      }
+    },
+    "typeToProxies": {
+      "HTTPS": ["proxy.antizapret.prostovpn.org:3143", "gw2.anticenz.org:443"],
+      "PROXY": ["proxy.antizapret.prostovpn.org:3128", "gw2.anticenz.org:8080"]
+    },
+
+    "ifHttpsProxyOnly":  false,
+    "ifHttpsUrlsOnly":   false,
+    "customProxyString": false,
+  },
+
+  "anticensorship": {
+    "ifUncensorByIp":   true,
+    "ifUncensorByHost": true,
+    "ipToProxy": {
+      "12.33.44.55": "satan.hell:666",
+      "2001:0db8:0000:0042:0000:8a2e:0370:7334": "satan.hell:333"
+    }
+  },
+
+  "_end":"CONFIGS_END"};
+
+var Ajv = require('ajv');
+var ajv = Ajv({allErrors: true, v5: true});
+
+if (!ajv.validate(configsSchema, CONFIGS)) {
+  console.log(ajv.errors);
+  process.exit();
+}
+console.log('Root is valid.');
+
+for( const schemaName of Object.keys(pluginsSchemas) ) {
+
+  const ifValid = ajv.validate(pluginsSchemas[schemaName], CONFIGS);
+  if (!ifValid) {
+    console.log(ajv.errors);
+  } else
+  {
+    console.log(schemaName + ' is valid.');
+  }
+
 }
 ```
+
 ## Possible Implementation (Not Finished)
 
 ```js
