@@ -41,7 +41,7 @@ exclude some sites from proxying or add some, etc.
 ### Configs are Dynamic (Not Sure)
 
 8. Don't use classes (e.g. Java) to describe configs object, use hash/dictionary instead with a schema validator.   
-   `CONFIGS` are used inside PAC script too, and there I would like to use `CONFIGS.pluginNamedFoo.propBar`, `getConfigsFor('pluginNamedFoo').propBar` seems inconvenien.
+   `CONFIGS` are used inside PAC script too, and there I would like to use `CONFIGS.pluginNamedFoo.propBar`, `getConfigsFor('pluginNamedFoo').propBar` seems inconvenient.
 
 ## Example
 
@@ -252,7 +252,7 @@ Plugin support is itself implemented via plugin.
   additionalProperties: false
 }
 ```
-## Possible Implementation
+## Possible Implementation (Not Finished)
 
 ```js
 // Chrome Extension (Client)
