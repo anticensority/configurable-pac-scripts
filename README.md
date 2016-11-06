@@ -29,7 +29,7 @@ exclude some sites from proxying or add some, etc.
 1. You can't know what configs you will need, it varies with use cases and time.
    Clients should be able to reject configs they can't use based on version (not only schema).
    Version also may be used for data migration of configs.
-   Migrations bloat the client codebase, so minimum number of migration instructions should be kept on the cleint,
+   Migrations bloat the client codebase, so minimum number of migration instructions should be kept on the client,
    migration scripts may be lazy loaded on each update (if allowed).
 
 ### Configs should be Modular
