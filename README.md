@@ -38,10 +38,10 @@ exclude some sites from proxying or add some, etc.
   * problem decomposition, separation of concerns
   * one standard/code may be used for different use cases (but we have only one -- anticensorship)
 
-### Configs are Dynamic
+### Configs are Dynamic (Not Sure)
 
-8. Don't use classes (e.g. Java) to describe configs object, use hash/dictionary instead with a schema validator.
-   I would like to use `CONFIGS.pluginNamedFoo.propBar`, `getConfigsFor('pluginNamedFoo').propBar` seems inconvenient.
+8. Don't use classes (e.g. Java) to describe configs object, use hash/dictionary instead with a schema validator.   
+   `CONFIGS` are used inside PAC script too, and there I would like to use `CONFIGS.pluginNamedFoo.propBar`, `getConfigsFor('pluginNamedFoo').propBar` seems inconvenien.
 
 ## Example
 
