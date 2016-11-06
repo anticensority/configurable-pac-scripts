@@ -116,7 +116,7 @@ pluginsSchemas.plugins = {
 
 };
 
-const hostnameRE   = '([a-z0-9-]+[.])+[a-z-]+'; // e.g.: "local-foobar-host"
+const hostnameRE   = '([a-z0-9-]+[.])*[a-z0-9-]+'; // e.g.: "local-foobar-host"
 const ipv4RE       = '[0-9]{1,3}(.[0-9]{1,3}){3}';
 const ipv6RE       = '([0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}';
 
