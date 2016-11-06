@@ -104,17 +104,6 @@ const configsSchema = {
   title: "PAC Script Configs",
 
   type: "object",
-  properties: {
-
-    _start: {
-      constant: "CONFIGS_START",
-    },
-    _end: {
-      constant: "CONFIGS_END",
-    }
-
-  },
-  required: ["_start", "_end"],
   additionalProperties: {
     type: "object",
     properties: {
@@ -124,6 +113,7 @@ const configsSchema = {
     },
     required: ["version"]
   }
+
 };
 
 const pluginsSchemas = {};
@@ -296,14 +286,8 @@ class PacConfigs {
     }
 
     _schemas: {
-      root: rootSchema, // { plugins: ...schema... }
-        ???
-        plugins: {
-          ...
-          common: ...PacConfigPlugin...
-          anticensorship: ...PacConfigPlugin...
-          ...
-        }
+      root: configsSchema,
+      plugins: {}
     }
 
   Methods:
@@ -313,7 +297,7 @@ class PacConfigs {
         plugins.forEach( (plugin) => this.usePlugin(plugin) );
         this.configs.defauld = defauldConfigs
 
-    usePlugin(plugin)
+    usePlugin( PacConfigPlugin plugin )
       CHANGES: _schemas
 
     _merge(target, source)
