@@ -52,6 +52,46 @@ exclude some sites from proxying or add some, etc.
 ```js
 'use strict';
 
+// CONFIGS is extracted from PAC script as JSON
+
+const CONFIGS = {
+  "_start":"CONFIGS_START",
+
+  "proxies": {
+    "version": "0.0.0.15",
+    "exceptions": {
+      "ifEnabled": true,
+      "ifHostProxied": {
+        "youtube.com": false,
+        "archive.org": true,
+        "bitcoin.org": true
+      }
+    },
+    "typeToProxies": {
+      "HTTPS": ["proxy.antizapret.prostovpn.org:3143", "gw2.anticenz.org:443"],
+      "PROXY": ["proxy.antizapret.prostovpn.org:3128", "gw2.anticenz.org:8080"]
+    },
+    "ipToProxy": {
+      "12.33.44.55": "satan.hell",
+      "2001:0db8:0000:0042:0000:8a2e:0370:7334": "satan.hell"
+    },
+
+    "ifHttpsProxyOnly":  false,
+    "ifHttpsUrlsOnly":   false,
+    "customProxyString": false,
+  },
+
+  "anticensorship": {
+    "version": "0.0.0.15",
+    "ifUncensorByIp":   true,
+    "ifUncensorByHost": true
+  },
+
+  "_end":"CONFIGS_END"
+};
+
+// SCHEMAS
+
 const configsSchema = {
 
   title: "PAC Script Configs",
@@ -68,53 +108,18 @@ const configsSchema = {
 
   },
   required: ["_start", "_end"],
-  additionalProperties: true
+  additionalProperties: {
+    type: "object",
+    properties: {
+
+      version: { type: "string" }
+
+    },
+    required: ["version"]
+  }
 };
 
 const pluginsSchemas = {};
-
-pluginsSchemas.plugins = {
-
-  title: "PAC Script Plugins",
-
-  definitions: {
-    pluginDescription: {
-      type: "object",
-      properties: {
-
-        version:   { type: "string" },
-        schemaUrl: { type: "string", format: "uri" }
-
-      },
-      required: ["version"],
-      additionalProperties: false
-    }
-  },
-
-  type: "object",
-  properties: {
-
-    plugins: {
-      title: "Plugin for supporting other plugins",
-      type: "object",
-      properties: {
-
-        plugins: {
-          $ref: "#/definitions/pluginDescription"
-        }
-
-      },
-      required: ["plugins"],
-      additionalProperties: {
-        $ref: "#/definitions/pluginDescription"
-      }
-    }
-
-  },
-  required: ["plugins"],
-  additionalProperties: true
-
-};
 
 const hostnameRE   = '([a-z0-9-]+[.])*[a-z0-9-]+'; // e.g.: "local-foobar-host"
 const ipv4RE       = '[0-9]{1,3}(.[0-9]{1,3}){3}';
@@ -141,6 +146,7 @@ pluginsSchemas.proxies = {
       type: "object",
       properties: {
 
+        version: { constant: "0.0.0.15" },
         exceptions: {
           type: "object",
           properties: {
@@ -173,6 +179,14 @@ pluginsSchemas.proxies = {
           },
           additionalProperties: false
         },
+        ipToProxy: {
+          patternProperties: {
+
+            [ipPattern]: { type: "string", pattern: nodePattern }
+
+          },
+          additionalProperties: false
+        },
         ifHttpsProxyOnly: { type: "boolean" },
         ifHttpsUrlsOnly: { type: "boolean" },
         customProxyString: {
@@ -182,8 +196,9 @@ pluginsSchemas.proxies = {
             constant: false
           }]
         }
+
       },
-      required: ["typeToProxies", "exceptions"],
+      required: ["version", "exceptions", "typeToProxies", "ipToProxy"],
       additionalProperties: false
     }
 
@@ -204,23 +219,16 @@ pluginsSchemas.anticensorship = {
       type: "object",
       properties: {
 
+        version: { constant: "0.0.0.15" },
         ifUncensorByIp: {
           type: "boolean"
         },
         ifUncensorByHost: {
           type: "boolean"
         },
-        ipToProxy: {
-          patternProperties: {
-
-            [ipPattern]: { type: "string", pattern: nodePattern }
-
-          },
-          additionalProperties: false
-        }
 
       },
-      required: ["ipToProxy"],
+      required: ["version", "ifUncensorByIp", "ifUncensorByHost"],
       additionalProperties: false
     }
 
@@ -229,46 +237,6 @@ pluginsSchemas.anticensorship = {
   additionalProperties: true
 
 };
-
-// CONFIGS is extracted from PAC script as JSON
-
-const CONFIGS = {"_start":"CONFIGS_START",
-
-  "plugins": {
-    "plugins": { "version": "0.0.0.15", "schemaUrl": "https://satan.hell/anticensor.json" },
-    "proxies":  { "version": "0.0.0.15" },
-    "anticensorship": { "version": "0.0.0.15" }
-  },
-
-  "proxies": {
-    "exceptions": {
-      "ifEnabled": true,
-      "ifHostProxied": {
-        "youtube.com": false,
-        "archive.org": true,
-        "bitcoin.org": true
-      }
-    },
-    "typeToProxies": {
-      "HTTPS": ["proxy.antizapret.prostovpn.org:3143", "gw2.anticenz.org:443"],
-      "PROXY": ["proxy.antizapret.prostovpn.org:3128", "gw2.anticenz.org:8080"]
-    },
-
-    "ifHttpsProxyOnly":  false,
-    "ifHttpsUrlsOnly":   false,
-    "customProxyString": false,
-  },
-
-  "anticensorship": {
-    "ifUncensorByIp":   true,
-    "ifUncensorByHost": true,
-    "ipToProxy": {
-      "12.33.44.55": "satan.hell",
-      "2001:0db8:0000:0042:0000:8a2e:0370:7334": "satan.hell"
-    }
-  },
-
-  "_end":"CONFIGS_END"};
 
 var Ajv = require('ajv');
 var ajv = Ajv({allErrors: true, v5: true});
