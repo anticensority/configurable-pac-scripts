@@ -61,6 +61,7 @@ var CONFIGS = /*CONFIGS_START*/{
 ```js
 'use strict';
 
+// ##### CONFIGS #####
 // CONFIGS are extracted from PAC script as JSON
 // Inside PAC it looks like:
 
@@ -98,9 +99,9 @@ const CONFIGS = /*CONFIGS_START*/{
 
 }/*CONFIGS_END*/;
 
-// SCHEMAS
+// ##### SCHEMAS #####
 
-const configsSchema = {
+const configsRootSchema = {
 
   title: "PAC Script Configs",
 
@@ -236,6 +237,8 @@ pluginsSchemas.anticensorship = {
 
 };
 
+// ##### TESTS OF SCHEMAS #####
+
 var Ajv = require('ajv');
 var ajv = Ajv({allErrors: true, v5: true});
 
@@ -256,50 +259,48 @@ for( const schemaName of Object.keys(pluginsSchemas) ) {
   }
 
 }
-```
 
-## Possible Implementation (Not Finished)
-
-```js
+// ##### CLIENT IMPLEMENTATION #####
 // Chrome Extension (Client)
 
-class PacConfigPlugin {
+class PacConfigsPlugin {
 
-  Fields:
+  constructor(name, version, schema) {
 
-    name
-    version
-    scheme
+    this.name = name;
+    this.version = version;
+    this.schema = schema
+
+  }
 
 };
 
 class PacConfigs {
 
-  Fields:
-  
-    custom: {...}
-    set defauld(newDefauld) {
-      this.assertSchemes( this._merge( newDefauld, this.custom ) );
-      return newDefauld;
-    }
-    get defauld(value) {
-      return value;
-    }
+  usePlugin( plugin ) {
+    this._plugins[ plugin.name ] = plugin;
+  }
 
-    _schemas: {
-      root: configsSchema,
-      plugins: {}
-    }
+  constructor(...plugins) {
+
+    this._rootSchema = configsRootSchema;
+    this._plugins = {};
+    plugins.forEach( (plugin) => this.usePlugin(plugin) );
+
+  }
+
+  // TODO: STOPPED HERE
+
+  set defauld(newDefauld) {
+    this.assertSchemes( this._merge( newDefauld, this.custom ) );
+    return newDefauld;
+  }
+  get defauld(value) {
+    return value;
+  }
+  custom: {...}    
 
   Methods:
-  
-    constructor(defauldConfigs, ...plugins)
-      CALLS:
-        plugins.forEach( (plugin) => this.usePlugin(plugin) );
-        this.configs.defauld = defauldConfigs
-
-    usePlugin( PacConfigPlugin plugin )
-      CHANGES: _schemas
 
     _merge(target, source)
     
