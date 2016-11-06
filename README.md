@@ -20,11 +20,12 @@ exclude some sites from proxying or add some, etc.
    be no need for lexical parsing of ecmascript.  
    For easier search/replace we will use some marks for start and end of the object description.  
    Object properteis can't be used as marks because JS doesn't guarantee strict order of object properties, so we will use comments:
+   
    ```js
 var CONFIGS = /*CONFIGS_START*/{
 ... json descriptoin ...
 }/*CONFIGS_END*/;
-   ```
+   ```  
    Some JS environments don't preserve comments (gscripts, e.g.) -- take care.
 
 ### Clients should Use Schema Validation as Protection from Malformed Configs
