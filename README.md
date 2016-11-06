@@ -1,4 +1,4 @@
-# Configurable PAC Scripts
+# Configurable PAC Scripts (Draft)
 
 ## Why
 
@@ -47,6 +47,7 @@ exclude some sites from proxying or add some, etc.
 
 ```js
 // File: proxy-0.0.0.15.pac
+// ... Somewhere in the middle of PAC script ...
 var CONFIGS = {"_start":"CONFIGS_START",
 
   "plugins": {
@@ -84,11 +85,13 @@ var CONFIGS = {"_start":"CONFIGS_START",
   },
 
   "_end":"CONFIGS_END"};
+// ... PAC script continues and makes uses of, e.g., CONFIGS.proxies...
 ```
 
 ## JSON Schemas of Configs
 
-The standard: http://json-schema.org
+  [JSON Schema standard](http://json-schema.org)
+| [Understanding JSON Schema](https://spacetelescope.github.io/understanding-json-schema/)
 
 ### Common Code
 
