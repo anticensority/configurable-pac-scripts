@@ -17,7 +17,15 @@ exclude some sites from proxying or add some, etc.
    There must be a way to explicitly tell client what is required. In this only case configurable PAC scripts are not backward compatible with old software.
 4. PAC configs are part of the PAC script itself, not part of a separate file. But config may contain urls to external resources.
 5. Retrieving and changing configs must be easy, as easy as search/replace and parsing JSON, there should
-   be no need for lexical parsing of ecmascript. `_start` and `_end` properties are used to mark configs object for easier search/replace.
+   be no need for lexical parsing of ecmascript.  
+   For easier search/replace we will use some marks for start and end of the object description.  
+   Object properteis can't be used as marks because JS doesn't guarantee strict order of object properties, so we will use comments:
+   ```js
+var CONFIGS = /*CONFIGS_START*/{
+... json descriptoin ...
+}/*CONFIGS_END*/;
+   ```
+   Some JS environments don't preserve comments (gscripts, e.g.) -- take care.
 
 ### Clients should Use Schema Validation as Protection from Malformed Configs
 
@@ -52,10 +60,10 @@ exclude some sites from proxying or add some, etc.
 ```js
 'use strict';
 
-// CONFIGS is extracted from PAC script as JSON
+// CONFIGS are extracted from PAC script as JSON
+// Inside PAC it looks like:
 
-const CONFIGS = {
-  "_start":"CONFIGS_START",
+const CONFIGS = /*CONFIGS_START*/{
 
   "proxies": {
     "version": "0.0.0.15",
@@ -85,10 +93,9 @@ const CONFIGS = {
     "version": "0.0.0.15",
     "ifUncensorByIp":   true,
     "ifUncensorByHost": true
-  },
+  }
 
-  "_end":"CONFIGS_END"
-};
+}/*CONFIGS_END*/;
 
 // SCHEMAS
 
