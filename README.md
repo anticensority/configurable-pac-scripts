@@ -305,94 +305,133 @@ class PacConfigsPlugin {
 class PacConfigs {
 
   usePlugin( plugin ) {
+
     this._plugins[ plugin.name ] = plugin;
+
   }
 
-  constructor(...plugins) {
+  assertSchemas(configs = this.getMerged()) {
+
+    check(configs); // TODO:
+
+  }
+
+  constructor(defauld, ...plugins) {
 
     this._rootSchema = configsRootSchema;
     this._plugins = {};
-    this.defauld  = {};
-    this.custom   = {};
     plugins.forEach( (plugin) => this.usePlugin(plugin) );
+    this.defauld  = defauld;
+    this.custom   = {};
+    assertSchemas( this.defauld );
 
   }
-  
-  getCustom(path, ifPathMustExist = false) {
-    // configs.getCustom('proxies.exceptions.ifHostnameProxied')
 
-    const path = _path.split('.');
+  /* 
+   * `path` example: 'proxies.exceptions.ifHostnameProxied'
+   * If 'exceptions' doesn't exist, it is initialized with `{}`.
+   * If 'ifHostnameProxied' doesn't exist, it is not created.
+   * Reference to property of custom is returned.
+  **/
+  getCustomByRef(path, ifPathMustExist = false) {
+
+    path = path.split('.');
     let custom = this.custom;
-    const checkIfPropExist = (obj, prop) => {
+    const checkIfPropExists = (obj, prop) => {
 
-      const ifOwn = !obj.hasOwnProperty(prop);
+      const ifOwn = obj.hasOwnProperty(prop);
       if ( !ifOwn && ifPathMustExist ) {
         throw new Error('Can\'t get prop in custom configs: ' + prop + ' in ' + _path);
       }
       return ifOwn;
 
     };
+    let prop = path.shift();
     while( path.length > 1 ) {
-      let prop = path.shift();
-      if ( checkIfPropExist(custom, prop) ) {
-        custom[ prop ] = {};
+      if ( !checkIfPropExists(custom, prop) ) {
+        custom[ prop ] = {}; // Not for leaves.
       }
       custom = custom[ prop ];
+      prop = path.shift();
     }
-    checkIfPropExist(custom, prop);
+
+    checkIfPropExists(custom, prop);
     return custom[ prop ];
 
   },
 
-  set(path, value) {
+  setCustom(path, value) {
 
     path = path.split('.');
     const prop = path.pop();
     let custom = this.custom;
-    if ( path.length ) {
-      custom = this.getCustom( path.join('.') );
+    if ( path.length > 0 ) {
+      custom = this.getCustomByRef( path.join('.') );
     }
     custom[ prop ] = value;
-    window.antiCensorRu.pushToStorage();
 
-   },
+  },
 
-  _merge(target, source) {
-    // TODO:
+  _deepMerge(target, source, ifTargetNotOwn, ifSourceNotOwn) {
+
+    const clone = (value) => JSON.parse( JSON.stringify( { foo: value } ) ).foo; // Obj MUSTN'T have Date property.
+
+    if ( ifTargetNotOwn && ifSourceNotOwn ) {
+      throw new Error('At least one value must be flagged as own property.');
+    }
+    if ( ifTargetNotOwn ) {
+      return clone(source);
+    }
+    if ( ifSourceNotOwn ) {
+      return clone(target);
+    }
+    // Types must match.
+    if ( !(target && source ? target.constructor !== source.constructor : typeof(target) !== typeof(source) ) ) {
+      throw new Error(
+        'You can\'t change type of default configs: default is ' + target + ', custom is ' + source
+      );
+    }
+    const ifTargetPlain = !(tvalue && tvalue.constructor === Object);
+    const ifSourcePlain = !(svalue && svalue.constructor === Object);
+    const ifBothPlain = ifTargetPlain && ifSourcePlain;
+    if ( ifBothPlain ) {
+      return clone(source);
+    }
+    // Both objects.
+    const merged = {};
+    // Get all props of both.
+    const props = new Set(Object.keys(target));
+    Object.keys(source).forEach( (p) => props.add(p) );
+
+    for( const prop of props ) {
+      merged[ prop ] = this._deepMerge(target[ prop ], source[ prop ], target.hasOwnProperty(prop), source.hasOwnProperty(prop) );
+    }
+    return merged;
   }
-  
-  assertSchemas(configs = this.get()) {
-    check(configs); // TODO:
+
+  getMerged(path) {
+
+    let defauld = this.default;
+    let custom  = this.custom;
+    path = path.split('.');
+
+    const ifHasNoSuchProperty = {
+      defauld: false,
+      custom: false
+    };
+    while( path.length ) {
+      let prop  = path.shift();
+      if (!defauld && !custom) {
+        throw new Error('Can\'t get ' + prop + ' of undefined.');
+      }
+      ifHasNoSuchProperty.defauld = !( defauld && defauld.hasOwnProperty(prop) );
+      ifHasNoSuchProperty.custom  = !( custom  && custom.hasOwnProperty(prop) );
+      defauld = defauld && defauld[ prop ];
+      custom  = custom  && custom[ prop ];
+    }
+    return this._deepMerge(defauld, custom, ifHasNoSuchProperty.defauld, ifHasNoSuchProperty.custom );
+
   }
-
-  // TODO: STOPPED HERE
-
-  set defauld(newDefauld) {
-    this.assertSchemes( this._merge( newDefauld, this.custom ) );
-    return newDefauld;
-  }
-  get defauld(value) {
-    return value;
-  }
-  custom: {...}    
-
-  Methods:
-
-    getCustomObject(pathStr)
-      more convenient for creating custom props than basic set
-      DOES:
-        returns modifiable prop of custom without any merging
-        returns only values with prototype Object
-        if prop is not defined:
-          1. checks that defauld has Object on the same path
-          2. creates {} on custom and returns it.
-    get(pathStr, ifStrict = true)
-      DOES: applies custom to defauld, gets prop __strictly__
-      RETURNS: merged __copy__
-    set(pathStr)
-      CALLS:
-        sets prop of custom configs
-        this.assertScheme()
 
 };
 
