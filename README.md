@@ -23,10 +23,10 @@ exclude some sites from proxying or add some, etc.
    
    ```js
 var CONFIGS = /*CONFIGS_START*/{
-... json descriptoin ...
+... json description ...
 }/*CONFIGS_END*/;
-   ```  
-   Some JS environments don't preserve comments (gscripts, e.g.) -- take care.
+   ```
+   Some JS environments don't preserve comments (gscript, e.g.) -- take care.
 
 ### Clients should Use Schema Validation as Protection from Malformed Configs
 
@@ -45,7 +45,9 @@ var CONFIGS = /*CONFIGS_START*/{
 
 7. Separation into components/modules/plugins contributes to:
   * problem decomposition, separation of concerns
+  * separate versioning of components may be used to organise migration code in a modular way
   * one standard/code may be used for different use cases (but we have only one -- anticensorship)
+  * different groups of developers may evolve their own component (and version it separately)
 
 ### Configs are Dynamic (Not Sure)
 
@@ -58,6 +60,16 @@ var CONFIGS = /*CONFIGS_START*/{
 | [Understanding JSON Schema](https://spacetelescope.github.io/understanding-json-schema/)
 | [ajv](https://github.com/epoberezkin/ajv)
 
+### Terminology
+
+* _hostname_ -- `/([a-z0-9-]+[.])*[a-z0-9-]+/` (no protocol or port).
+* _node_ -- an IPv4, IPv6 or a network hostname (defined in `getaddrinfo(3)`) (no protocol or port).
+* _host_ -- _node_ with a mandatory port (no protocol).
+
+Definitions of _host_ and _hostname_ are looked up form the properties of `<a>` DOM.
+
+### Code
+
 ```js
 'use strict';
 
@@ -68,20 +80,24 @@ var CONFIGS = /*CONFIGS_START*/{
 const CONFIGS = /*CONFIGS_START*/{
 
   "proxies": {
-    "version": "0.0.0.15",
+    "version": 0.1,
     "exceptions": {
-      "ifEnabled": true,
-      "ifHostProxied": {
+      "ifByHostname": true,
+      "ifHostnameProxied": {
         "youtube.com": false,
         "archive.org": true,
         "bitcoin.org": true
+      },
+      "ifByIp": true,
+      "ifIpProxied": {
+        "22.33.44.55": false
       }
     },
-    "typeToProxies": {
+    "typeToProxyHosts": {
       "HTTPS": ["proxy.antizapret.prostovpn.org:3143", "gw2.anticenz.org:443"],
       "PROXY": ["proxy.antizapret.prostovpn.org:3128", "gw2.anticenz.org:8080"]
     },
-    "ipToProxy": {
+    "ipToProxyNode": {
       "12.33.44.55": "satan.hell",
       "2001:0db8:0000:0042:0000:8a2e:0370:7334": "satan.hell"
     },
@@ -92,7 +108,7 @@ const CONFIGS = /*CONFIGS_START*/{
   },
 
   "anticensorship": {
-    "version": "0.0.0.15",
+    "version": 0.1,
     "ifUncensorByIp":   true,
     "ifUncensorByHost": true
   }
@@ -110,7 +126,7 @@ const configsRootSchema = {
     type: "object",
     properties: {
 
-      version: { type: "string" }
+      version: { type: "number", multipleOf: 0.01 }
 
     },
     required: ["version"]
@@ -128,6 +144,7 @@ const portRE       = ':[0-9]{1,5}';
 const ipv6portedRE = `\\[${ipv6RE}\\]${portRE}`;
 
 // Without port:
+const hostnamePattern = `^${hostnameRE}$`;
 const ipPattern   = `^(${ipv4RE}|${ipv6RE})$`;
 const nodePattern = `^(${hostnameRE}|${ipv4RE}|${ipv6RE})$`;
 // MUST have port:
@@ -145,26 +162,35 @@ pluginsSchemas.proxies = {
       type: "object",
       properties: {
 
-        version: { constant: "0.0.0.15" },
+        version: { constant: 0.01 },
         exceptions: {
           type: "object",
           properties: {
 
-            ifEnabled: { type: "boolean" },
-            ifHostProxied: {
+            ifByHostname: { type: "boolean" },
+            ifHostnameProxied: {
               patternProperties: {
 
-                [nodePattern]: { type: "boolean" }
+                [hostnamePattern]: { type: "boolean" }
+
+              },
+              additionalProperties: false
+            },
+            ifByIp: { type: "boolean" },
+            ifIpProxied: {
+              patternProperties: {
+
+                [ipPattern]: { type: "boolean" }
 
               },
               additionalProperties: false
             }
 
           },
-          required: ["ifHostProxied"],
+          required: ["ifHostnameProxied"],
           additionalProperties: false
         },
-        typeToProxies: {
+        typeToProxyHosts: {
           patternProperties: {
 
             "^(HTTPS|PROXY)$": {
@@ -178,7 +204,7 @@ pluginsSchemas.proxies = {
           },
           additionalProperties: false
         },
-        ipToProxy: {
+        ipToProxyNode: {
           patternProperties: {
 
             [ipPattern]: { type: "string", pattern: nodePattern }
@@ -197,7 +223,7 @@ pluginsSchemas.proxies = {
         }
 
       },
-      required: ["version", "exceptions", "typeToProxies", "ipToProxy"],
+      required: ["version", "exceptions", "typeToProxyHosts", "ipToProxy"],
       additionalProperties: false
     }
 
@@ -218,7 +244,7 @@ pluginsSchemas.anticensorship = {
       type: "object",
       properties: {
 
-        version: { constant: "0.0.0.15" },
+        version: { constant: 0.01 },
         ifUncensorByIp: {
           type: "boolean"
         },
@@ -285,8 +311,57 @@ class PacConfigs {
 
     this._rootSchema = configsRootSchema;
     this._plugins = {};
+    this.defauld  = {};
+    this.custom   = {};
     plugins.forEach( (plugin) => this.usePlugin(plugin) );
 
+  }
+  
+  getCustom(path, ifPathMustExist = false) {
+    // configs.getCustom('proxies.exceptions.ifHostnameProxied')
+
+    const path = _path.split('.');
+    let custom = this.custom;
+    const checkIfPropExist = (obj, prop) => {
+
+      const ifOwn = !obj.hasOwnProperty(prop);
+      if ( !ifOwn && ifPathMustExist ) {
+        throw new Error('Can\'t get prop in custom configs: ' + prop + ' in ' + _path);
+      }
+      return ifOwn;
+
+    };
+    while( path.length > 1 ) {
+      let prop = path.shift();
+      if ( checkIfPropExist(custom, prop) ) {
+        custom[ prop ] = {};
+      }
+      custom = custom[ prop ];
+    }
+    checkIfPropExist(custom, prop);
+    return custom[ prop ];
+
+  },
+
+  set(path, value) {
+
+    path = path.split('.');
+    const prop = path.pop();
+    let custom = this.custom;
+    if ( path.length ) {
+      custom = this.getCustom( path.join('.') );
+    }
+    custom[ prop ] = value;
+    window.antiCensorRu.pushToStorage();
+
+   },
+
+  _merge(target, source) {
+    // TODO:
+  }
+  
+  assertSchemas(configs = this.get()) {
+    check(configs); // TODO:
   }
 
   // TODO: STOPPED HERE
@@ -302,8 +377,6 @@ class PacConfigs {
 
   Methods:
 
-    _merge(target, source)
-    
     getCustomObject(pathStr)
       more convenient for creating custom props than basic set
       DOES:
@@ -320,9 +393,6 @@ class PacConfigs {
         sets prop of custom configs
         this.assertScheme()
 
-    assertScheme(configs)
-      CALLS:
-        configs ? check(configs) : check(this.get())
 };
 
 ```
