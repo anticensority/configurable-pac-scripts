@@ -66,7 +66,8 @@ var CONFIGS = /*CONFIGS_START*/{
 * _node_ -- an IPv4, IPv6 or a network hostname (defined in `getaddrinfo(3)`) (no protocol or port).
 * _host_ -- _node_ with a mandatory port (no protocol).
 
-Definitions of _host_ and _hostname_ are looked up form the properties of `<a>` DOM.
+Definitions of _host_ and _hostname_ are looked up form the properties of `<a>` DOM.  
+IDN must be punycoded.
 
 ### Code
 
