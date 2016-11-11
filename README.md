@@ -288,7 +288,28 @@ for( const schemaName of Object.keys(pluginsSchemas) ) {
 }
 
 // ##### CLIENT IMPLEMENTATION #####
-// Chrome Extension (Client)
+
+/*
+
+Client is a Chrome Extension.
+
+Configs inside a PAC script may be updated.
+For updates incompatible with a client it's better to change PAC script url
+and use new url in the new version of a client.
+
+User may tweak configs and his changes should be preserved on updates.
+There are two ways of applying user configs:
+
+1. Merge user configs with updatable defaults.
+2. Use user configs and ignore changes in defaults (frozen configs).
+
+If user deletes element from an array or a property in configs then
+this kind of change would be difficult to keep and merge with new defaults
+in terms of code to be written and maintained.
+
+TODO: think how to do it the most reasonable way.
+
+*/
 
 class PacConfigsPlugin {
 
@@ -304,29 +325,32 @@ class PacConfigsPlugin {
 
 class PacConfigs {
 
-  usePlugin( plugin ) {
+  constructor(defauld, ...plugins) {
 
-    this._plugins[ plugin.name ] = plugin;
+    this._rootSchema = configsRootSchema;
+    
+    this._plugins = new Map();
+    plugins.forEach( (plugin) => this._plugins.set(plugin.name, plugin) );
+    
+    this.defauld  = defauld;
+    this.custom   = {};
+    this.ifDirty = true;
+    assertSchemas( this.defauld );
 
   }
 
   assertSchemas(configs = this.getMerged()) {
 
-    check(configs); // TODO:
+    assert( ajv.validate(this._rootSchema, configs) );
 
-  }
+    for( const plugin of this._plugins.values() ) {
+      assert( ajv.validate(plugin.schema, configs) );
+    }
 
-  constructor(defauld, ...plugins) {
+    this.ifDirty = false;
 
-    this._rootSchema = configsRootSchema;
-    this._plugins = {};
-    plugins.forEach( (plugin) => this.usePlugin(plugin) );
-    this.defauld  = defauld;
-    this.custom   = {};
-    assertSchemas( this.defauld );
-
-  }
-
+  }  
+  
   /* 
    * `path` example: 'proxies.exceptions.ifHostnameProxied'
    * If 'exceptions' doesn't exist, it is initialized with `{}`.
@@ -356,6 +380,8 @@ class PacConfigs {
     }
 
     checkIfPropExists(custom, prop);
+
+    this.ifDirty = true;
     return custom[ prop ];
 
   },
@@ -369,6 +395,7 @@ class PacConfigs {
       custom = this.getCustomByRef( path.join('.') );
     }
     custom[ prop ] = value;
+    this.ifDirty = true;
 
   },
 
@@ -434,5 +461,4 @@ class PacConfigs {
   }
 
 };
-
 ```
