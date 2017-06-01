@@ -1,4 +1,6 @@
-# Configurable PAC Scripts (Draft)
+# Configurable PAC Scripts (Deprecated)
+
+This document is deprecated, we don't maintain it any more.
 
 ## Why
 
